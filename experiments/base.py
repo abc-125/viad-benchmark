@@ -16,7 +16,7 @@ class BaseExperiment(ABC):
         # seeds
         self.seeds = [3341, 1954, 1087]
 
-        # loggger directory
+        # logger directory
         self.mlflow_dir = "./mlruns"
 
         #metrics
@@ -28,7 +28,7 @@ class BaseExperiment(ABC):
             F1Score(fields=["anomaly_map", "gt_mask"], prefix="pixel_"),
         ]
 
-        # cathegories for each dataset
+        # categories for each dataset
         self.datasets_cathegories = {
             "BTech": ["01", "02", "03"],
             "VAD": ["vad"],
