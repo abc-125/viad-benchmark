@@ -1,6 +1,7 @@
-from anomalib.engine import Engine
-
+import os
 from lightning.pytorch.loggers import MLFlowLogger
+
+from anomalib.engine import Engine
 
 from .base import BaseExperiment
 
@@ -9,14 +10,19 @@ class EvalExperiment(BaseExperiment):
     """
     Class for evaluating models on a datasets (presented as datamodules).
     """
-    def setup(self, models, datasets):
+    def setup(self, models, datasets, experiment_name="eval", metrics=None):
         """
         Setup the experiment.
         """
+        # custom parameters
         self.models = models
         self.datasets = datasets
-        self.experiment_name = "eval"
-        self.seeds = [self.seeds[0]]  # Use only one seed for evaluation
+        self.experiment_name = experiment_name
+        if metrics is not None:
+            self.metrics = metrics
+        
+        # default parameters
+        self.seeds = [self.seeds[0]]  # use only one seed for evaluation
         self.image_size = (256, 256)
         
 
@@ -33,6 +39,7 @@ class EvalExperiment(BaseExperiment):
             run_name = f"{model_name}_{dataset_name}_{cls}_seed{seed}"
             engine = Engine(
                 **self.default_params_trainer[model_name],
+                default_root_dir=os.path.join(self.root, "results", self.experiment_name),
                 # log results to mlflow
                 logger=MLFlowLogger(
                     experiment_name=self.experiment_name,

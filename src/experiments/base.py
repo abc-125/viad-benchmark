@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import os
 from lightning.pytorch import seed_everything
 
 from anomalib.metrics import AUROC, AUPRO, F1Score, Evaluator
@@ -12,12 +13,15 @@ class BaseExperiment(ABC):
     Base class for experiments.
     """
 
-    def __init__(self):
+    def __init__(self, root="./"):
         # seeds
         self.seeds = [3341, 1954, 1087]
 
+        # root directory
+        self.root = root
+
         # logger directory
-        self.mlflow_dir = "./mlruns"
+        self.mlflow_dir = os.path.join(self.root, "mlruns")
 
         #metrics
         self.metrics = [
@@ -65,7 +69,13 @@ class BaseExperiment(ABC):
                 f"Dataset '{dataset_name}' is not recognized. Available datasets are: {list(classes.keys())}"
             )
         
-        return dataset_class(category=cls, train_batch_size=16)
+        dataset = dataset_class(
+            root=os.path.join(self.root, "datasets", dataset_name.lower()), 
+            category=cls, 
+            train_batch_size=16
+        )
+        
+        return dataset
     
 
     def model_factory(self, model_name, image_size):

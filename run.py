@@ -1,4 +1,4 @@
-from experiments.eval import EvalExperiment
+from src.experiments.eval import EvalExperiment
 
 
 if __name__ == "__main__":
