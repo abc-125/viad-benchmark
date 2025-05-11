@@ -4,7 +4,8 @@ from lightning.pytorch import seed_everything
 
 from anomalib.metrics import AUROC, AUPRO, F1Score, Evaluator
 from anomalib.data import BTech, Visa, VAD
-from anomalib.models import Patchcore, ReverseDistillation, Csflow
+from anomalib.models import Patchcore, ReverseDistillation, Csflow, Fastflow
+from anomalib.pre_processing import PreProcessor
 
 
 
@@ -45,7 +46,7 @@ class BaseExperiment(ABC):
             "Patchcore": {},
             "ReverseDistillation": {"max_epochs": 200, "check_val_every_n_epoch": 200},
             "Csflow": {"max_epochs": 240, "check_val_every_n_epoch": 240},
-
+            "Fastflow": {"max_epochs": 200, "check_val_every_n_epoch": 200},
         }
 
         # base experiment parameters
@@ -78,7 +79,7 @@ class BaseExperiment(ABC):
         return dataset
     
 
-    def model_factory(self, model_name, image_size):
+    def model_factory(self, model_name, image_size, transform=None):
         """
         Factory method to create a model instance based on the model name.
         The model is created with the pre-processor configured for the given image size
@@ -88,18 +89,23 @@ class BaseExperiment(ABC):
             "Patchcore": Patchcore,
             "ReverseDistillation": ReverseDistillation,
             "Csflow": Csflow,
+            "Fastflow": Fastflow,
         }
         model_class = classes.get(model_name)
         if model_class is None:
             raise ValueError(
-                f"Model '{model_name}' is not recognized. Available datasets are: {list(classes.keys())}"
+                f"Model '{model_name}' is not recognized. Available models are: {list(classes.keys())}"
             )
         
-        pre_processor = model_class.configure_pre_processor(image_size=image_size)
+        if transform is None:
+            pre_processor = model_class.configure_pre_processor(image_size=image_size)
+        else:
+            pre_processor = PreProcessor(transform=transform)
+            print(f"Using custom transform.")
+
         evaluator = Evaluator(test_metrics=self.metrics, compute_on_cpu=False)
 
         return model_class(evaluator=evaluator, pre_processor=pre_processor)
-
 
 
     def run(self):
