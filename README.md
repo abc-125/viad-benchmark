@@ -4,6 +4,13 @@
 
 ✨[Spotlight paper](https://arxiv.org/abs/2503.23451) at VAND workshop at CVPR 2025. It presents a comprehensive empirical analysis of Visual Industrial Anomaly Detection with a focus on real-world applications. We demonstrate that recent SOTA methods perform worse than methods from 2021 when evaluated on a variety of datasets. We also investigate how different practical aspects, such as input size, distribution shift, data contamination, supervised training, and having a validation set, affect the results.
 
+**TLDR**:
+- Existing academic evaluation practices do not reliably predict real-world industrial performance for anomaly detection models (e.g., early stop on the test dataset, center crop on the object).
+- Higher input resolution helps detect small defects, but for some models, it also makes the detection of large and logical defects worse, demonstrating the restrictions of the receptive field.
+- Anomaly detection models are sensitive to noisy labels in the training data, and truly unsupervised approaches still underperform compared to one-class methods even in the presence of noisy labels.
+- Data distribution shift is detected as anomaly by all the tested models, demonstrating the necessity for models which are capable of capturing semantic meaning rather than pixel values.
+- Usage of the validation set for an early stop strongly improves performance, even if it is not identical to the test set.
+
 
 ## 🔧 Install
 ```bash
