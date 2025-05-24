@@ -7,30 +7,29 @@ class MetricsReader():
     """
     Class for reading MLFlow metrics.
     """
-    def __init__(self, mlruns_path="./mlruns", experiment_name=None):
+    def __init__(self, mlruns_path="./mlruns"):
         self.mlruns_path = mlruns_path
-        self.experiment_name = experiment_name
         self.runs = {}
 
-    def get_experiment_name(self, experiment_path):
+    def get_experiment_name(self, experiment_path: str) -> str:
         """
         Get the experiment name from the meta.yaml file in the experiment folder.
+        If the file does not exist, return None.
         """
         meta_file = os.path.join(experiment_path, "meta.yaml")
         if os.path.exists(meta_file):
             with open(meta_file, 'r') as f:
                 meta_data = yaml.safe_load(f)
-                return meta_data.get("name", "unknown_experiment")
-        return "unknown_experiment"
+                return meta_data.get("name", None)
+        return None
 
 
-    def iterate_experiments(self):
+    def iterate_experiments(self) -> dict:
         """
-        Iterate over the experiments in the mlruns folder 
-        and return a dictionary of experiment names and paths.
-        Returns a list of experiment names if experiment_name is not provided. 
+        Iterate over the experiments in the mlruns folder
+        and return a dictionary of all experiment names and paths.
         """
-        
+
         experiments = {}
         experiments_folders = os.listdir(self.mlruns_path)
 
@@ -42,16 +41,13 @@ class MetricsReader():
             experiment_path = os.path.join(self.mlruns_path, experiment_id)
             if os.path.isdir(experiment_path):
                 experiment_name = self.get_experiment_name(experiment_path)
-                experiments[experiment_name] = experiment_path
+                if experiment_name is not None:
+                    experiments[experiment_name] = experiment_path
 
-                # return specific experiment if requested
-                if self.experiment_name is not None:
-                    return {self.experiment_name: experiment_path}
-            
         return experiments
 
 
-    def results_per_run(self, run_path):
+    def results_per_run(self, run_path: str) -> tuple [dict, dict]:
         """
         Read the image-level or pixel-level metrics and selected tags from the run folder.
         """
@@ -76,11 +72,13 @@ class MetricsReader():
         return results, tags
 
 
-    def summarize_results(self, experiment_path):
+    def summarize_results(self, experiment_path: str) -> dict:
         """
-        Summarize the results of the experiment by iterating 
+        Summarize the results of the experiment by iterating
         over the runs and calculating the mean of the metrics.
         """
+        self.runs = {}
+
         # iterate over runs in the experiment
         runs_folders = os.listdir(experiment_path)
         runs_folders.remove("meta.yaml")
@@ -108,18 +106,33 @@ class MetricsReader():
             for metric, values in metrics.items():
                 summary[key][metric] = sum(values) / len(values)
 
-        return summary
+        return dict(sorted(summary.items()))
 
 
-    def print_metrics(self):
+    def print_metrics(self, experiment_names: None | list = None) -> None:
         """
-        Print the metrics of all experiments in a readable format.
+        Print the metrics of all or selected experiments in a readable format.
+
+        Args:
+            experiment_names (list, optional): List of experiment names to print.
+                If None, all experiments will be printed. Defaults to None.
         """
         experiments = self.iterate_experiments()
 
-        for experiment_name, experiment_path in experiments.items():
-            print(f"Processing experiment: {experiment_name}")
-            summary = self.summarize_results(experiment_path)
+        if len(experiment_names) > 0:
+            if not isinstance(experiment_names, list):
+                raise TypeError("Parameter 'experiment_names' must be a list.")
+            names_set = set(experiment_names)
+            experiments_set = set(experiments.keys())
+            selected_experiments = list(names_set.intersection(experiments_set))
+        else:
+            selected_experiments = experiments.keys()
+
+        for name in selected_experiments:
+            path = experiments[name]
+
+            print(f"Processing experiment: {name}")
+            summary = self.summarize_results(path)
 
             # convert summary to a DataFrame for better readability
             summary_df = pd.DataFrame.from_dict(summary, orient="index")
