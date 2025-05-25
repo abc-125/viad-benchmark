@@ -72,41 +72,41 @@ class MetricsReader():
         return results, tags
 
 
-    def summarize_results(self, experiment_path: str) -> dict:
+    def summarize_results(
+            self, 
+            experiment_path: str, 
+            columns: list = ["model", "dataset"]
+        ) -> dict:
         """
         Summarize the results of the experiment by iterating
         over the runs and calculating the mean of the metrics.
+        Args:
+            experiment_path (str): Path to the experiment folder.
+            columns (list): Columns to group the results by. Defaults to ["model", "dataset"].
         """
-        self.runs = {}
+        # Prepare a list to collect run data
+        runs_data = []
 
-        # iterate over runs in the experiment
+        # Create DataFrame with all tags and metrics as columns
         runs_folders = os.listdir(experiment_path)
-        runs_folders.remove("meta.yaml")
+        if "meta.yaml" in runs_folders:
+            runs_folders.remove("meta.yaml")
         for run_id in runs_folders:
             results, tags = self.results_per_run(os.path.join(experiment_path, run_id))
-            self.runs[run_id] = (results, tags)
+            row = {"id": run_id}
+            row.update(tags)
+            row.update({k: float(v) for k, v in results.items()})
+            runs_data.append(row)
+        self.runs = pd.DataFrame(runs_data)
 
-        # calculate the mean of the metrics
-        summary = {}
-        for run_id, (results, tags) in self.runs.items():
-            model_name = tags.get("model", "unknown_model")
-            dataset_name = tags.get("dataset", "unknown_dataset")
-            key = (model_name, dataset_name)
-            if key not in summary:
-                summary[key] = {}
+        # Group by the specified columns and calculate mean for each metric
+        grouped = self.runs.groupby(columns)
+        mean_df = grouped.mean(numeric_only=True).reset_index()
 
-            for metric, value in results.items():
-                value = float(value)*100  # convert to percentage
-                if metric not in summary[key]:
-                    summary[key][metric] = []
-                summary[key][metric].append(value)
+        # Convert metrics to percentage
+        mean_df[mean_df.select_dtypes(include=['number']).columns] *= 100
 
-        # calculate the mean for each metric
-        for key, metrics in summary.items():
-            for metric, values in metrics.items():
-                summary[key][metric] = sum(values) / len(values)
-
-        return dict(sorted(summary.items()))
+        return mean_df.sort_values(by=columns)
 
 
     def print_metrics(self, experiment_names: None | list = None) -> None:
@@ -119,7 +119,7 @@ class MetricsReader():
         """
         experiments = self.iterate_experiments()
 
-        if len(experiment_names) > 0:
+        if experiment_names is not None:
             if not isinstance(experiment_names, list):
                 raise TypeError("Parameter 'experiment_names' must be a list.")
             names_set = set(experiment_names)
@@ -133,8 +133,63 @@ class MetricsReader():
 
             print(f"Processing experiment: {name}")
             summary = self.summarize_results(path)
+            print(summary)
 
-            # convert summary to a DataFrame for better readability
-            summary_df = pd.DataFrame.from_dict(summary, orient="index")
-            summary_df.index = pd.MultiIndex.from_tuples(summary_df.index, names=["model", "dataset"])
-            print(summary_df)
+
+    def plot_results_per_cathegory(
+            self, 
+            experiment_names: list, 
+            model_name: str = "Patchcore",
+            dataset_name: str = "Visa",
+            metric: str = "image_AUROC",
+            ) -> None:
+        """
+        Plot the results per category for the given metric.
+
+        Args:
+            experiment_names (list): List of experiment names to plot.
+            model_name (str): Model name to filter results. Defaults to "Patchcore".
+            dataset_name (str): Dataset name to filter results. Defaults to "Visa".
+            metric (str): Metric to plot. Defaults to "image_AUROC".
+        """
+        import matplotlib.pyplot as plt
+
+        experiments = self.iterate_experiments()
+        selected_experiments = [name for name in experiment_names if name in experiments]
+
+        plt.figure(figsize=(12, 7))
+        for name in selected_experiments:
+            path = experiments[name]
+            summary = self.summarize_results(path, columns=["model", "dataset", "cls"])
+
+            dataset_summary = summary[summary["dataset"] == dataset_name]
+            if dataset_summary.empty:
+                raise ValueError(f"No results found for dataset '{dataset_name}' in experiment '{name}'.")
+            
+            dataset_summary = dataset_summary[dataset_summary["model"] == model_name]
+            if dataset_summary.empty:
+                raise ValueError(f"No results found for model '{model_name}' for experiment '{name}'.")
+            
+            if metric not in dataset_summary.columns:
+                raise ValueError(f"Metric '{metric}' not found in the results for experiment '{name}'.")
+            
+            sorted_summary = dataset_summary.sort_values(by="cls")
+
+            # Plot the metric for each category
+
+            plt.plot(
+                sorted_summary["cls"],
+                sorted_summary[metric],
+                marker='o',
+                label=name,
+                linewidth=2
+            )
+
+        plt.ylim(0, 100)
+        plt.xlabel("Category")
+        plt.ylabel(metric)
+        plt.title(f"{metric} per category ({dataset_name}, {model_name})")
+        plt.xticks(rotation=45)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
