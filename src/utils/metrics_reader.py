@@ -142,15 +142,23 @@ class MetricsReader():
             model_name: str = "Patchcore",
             dataset_name: str = "Visa",
             metric: str = "image_AUROC",
-            ) -> None:
+            save_image: bool = False,
+            save_path: str = "../visualizations"
+        ) -> None:
         """
-        Plot the results per category for the given metric.
+        Plot the results per category for the given metric, model and dataset.
 
         Args:
             experiment_names (list): List of experiment names to plot.
             model_name (str): Model name to filter results. Defaults to "Patchcore".
             dataset_name (str): Dataset name to filter results. Defaults to "Visa".
             metric (str): Metric to plot. Defaults to "image_AUROC".
+            save_image (bool): If True, save the plot as an image. Defaults to False.
+            save_path (str): Path to save the image if `save_image` is True. Defaults to "../visualizations".
+
+        Raises:
+            ValueError: If the dataset or model is not found in the results.
+            ValueError: If the metric is not found in the results.
         """
         import matplotlib.pyplot as plt
 
@@ -168,7 +176,7 @@ class MetricsReader():
             
             dataset_summary = dataset_summary[dataset_summary["model"] == model_name]
             if dataset_summary.empty:
-                raise ValueError(f"No results found for model '{model_name}' for experiment '{name}'.")
+                raise ValueError(f"No results found for model '{model_name}' in experiment '{name}'.")
             
             if metric not in dataset_summary.columns:
                 raise ValueError(f"Metric '{metric}' not found in the results for experiment '{name}'.")
@@ -176,7 +184,6 @@ class MetricsReader():
             sorted_summary = dataset_summary.sort_values(by="cls")
 
             # Plot the metric for each category
-
             plt.plot(
                 sorted_summary["cls"],
                 sorted_summary[metric],
@@ -192,4 +199,10 @@ class MetricsReader():
         plt.xticks(rotation=45)
         plt.legend()
         plt.tight_layout()
-        plt.show()
+
+        if save_image:
+            filename = f"{dataset_name}_{model_name}_{metric}.png"
+            os.makedirs(save_path, exist_ok=True)
+            plt.savefig(os.path.join(save_path, filename), bbox_inches='tight', dpi=300)
+        else:
+            plt.show()
