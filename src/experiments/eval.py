@@ -7,21 +7,17 @@ from .base import BaseExperiment
 
 
 class EvalExperiment(BaseExperiment):
-    """
-    Class for evaluating models on a datasets (presented as datamodules).
-    """
+    """Evaluating models on a datasets."""
     def setup(
             self, 
             models, 
             datasets, 
             experiment_name="eval", 
-            image_size = (256, 256),
+            image_size=(256, 256),
             transform=None, 
             metrics=None
         ):
-        """
-        Setup the experiment.
-        """
+        """Setup the experiment."""
         # custom parameters
         self.models = models
         self.datasets = datasets
@@ -34,11 +30,8 @@ class EvalExperiment(BaseExperiment):
         # default parameters
         self.seeds = [self.seeds[0]]  # use only one seed for evaluation
         
-
     def run_single_training(self, seed, model_name, dataset_name):
-        """
-        Run the experiment.
-        """
+        """Run the single training of the experiment."""
         classes = self.datasets_cathegories[dataset_name]
                     
         # iterate over classes
