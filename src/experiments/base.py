@@ -3,7 +3,7 @@ import os
 from lightning.pytorch import seed_everything
 
 from anomalib.metrics import AUROC, AUPRO, F1Score, Evaluator
-from anomalib.data import BTech, Visa, VAD
+from anomalib.data import BTech, Visa, VAD, MPDD
 from anomalib.models import Patchcore, ReverseDistillation, Csflow, Fastflow
 from anomalib.pre_processing import PreProcessor
 
@@ -38,7 +38,8 @@ class BaseExperiment(ABC):
             "BTech": ["01", "02", "03"],
             "VAD": ["vad"],
             "Visa": ["candle", "capsules", "cashew", "chewinggum", "fryum", "macaroni1", 
-                     "macaroni2", "pcb1", "pcb2", "pcb3", "pcb4", "pipe_fryum"]
+                     "macaroni2", "pcb1", "pcb2", "pcb3", "pcb4", "pipe_fryum"],
+            "MPDD": ["bracket_black", "bracket_brown", "bracket_white", "connector", "metal_plate", "tubes"]
         }
 
         # model parameters for training based on papers
@@ -63,6 +64,7 @@ class BaseExperiment(ABC):
             "BTech": BTech,
             "VAD": VAD,
             "Visa": Visa,
+            "MPDD": MPDD,
         }
         dataset_class = classes.get(dataset_name)
         if dataset_class is None:
