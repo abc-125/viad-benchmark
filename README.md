@@ -2,7 +2,7 @@
 
 ## Work in progress
 
-✨[Spotlight paper](https://arxiv.org/abs/2503.23451) at VAND workshop at CVPR 2025. It presents a comprehensive empirical analysis of Visual Industrial Anomaly Detection with a focus on real-world applications. We demonstrate that recent SOTA methods perform worse than methods from 2021 when evaluated on a variety of datasets. We also investigate how different practical aspects, such as input size, distribution shift, data contamination, supervised training, and having a validation set, affect the results.
+✨[Spotlight paper](https://arxiv.org/abs/2503.23451)✨ at VAND workshop at CVPR 2025. It presents a comprehensive empirical analysis of Visual Industrial Anomaly Detection with a focus on real-world applications. We demonstrate that recent SOTA methods perform worse than methods from 2021 when evaluated on a variety of datasets. We also investigate how different practical aspects, such as input size, distribution shift, data contamination, supervised training, and having a validation set, affect the results.
 
 **TLDR**:
 - Existing academic evaluation practices do not reliably predict real-world industrial performance for anomaly detection models (e.g., early stop on the test dataset, center crop on the object).
@@ -40,11 +40,11 @@ We use [Anomalib](https://github.com/open-edge-platform/anomalib) library and th
 Please cite our paper if you find it useful:
 
 ```
-@misc{baitieva2025benchmark,
+@inproceedings{baitieva2025benchmark,
       title={Beyond Academic Benchmarks: Critical Analysis and Best Practices for Visual Industrial Anomaly Detection}, 
       author={Aimira Baitieva and Yacine Bouaouni and Alexandre Briot and Dick Ameln and Souhaiel Khalfaoui and Samet Akcay},
+      booktitle = {CVPRW},
       year={2025},
-      eprint={2503.23451},
-      archivePrefix={arXiv},
+      pages={4024-4034}
 }
 ```
